@@ -14,7 +14,7 @@ button{font:inherit;cursor:pointer;border:0}input,select,textarea{font:inherit;p
 .chips{display:flex;gap:8px;overflow-x:auto;padding:12px 16px}.chips button{white-space:nowrap;padding:8px 14px;border-radius:20px;background:var(--card);border:1px solid var(--ln);color:var(--tx);font-weight:600;font-size:13px}.chips button.on{background:var(--tx);color:var(--bg)}
 .it{display:flex;gap:12px;padding:14px 16px;background:var(--card);border-bottom:1px solid var(--ln)}.it .t{flex:1}.it p{margin:4px 0 0;color:var(--mu);font-size:13px}
 .dot{display:inline-block;width:14px;height:14px;border:2px solid var(--grn);border-radius:3px;position:relative;vertical-align:-2px;margin-right:6px}.dot:after{content:"";position:absolute;inset:2px;border-radius:50%;background:var(--grn)}.dot.nv{border-color:#b3261e}.dot.nv:after{background:#b3261e}
-.pic{width:96px;text-align:center;flex-shrink:0}.pic .e{height:84px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:40px;background:#ffe9d6;overflow:hidden}.pic img{width:100%;height:100%;object-fit:cover}
+.pic{width:112px;text-align:center;flex-shrink:0}.pic .e{height:100px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:40px;background:#ffe9d6;overflow:hidden}.pic img{width:100%;height:100%;object-fit:cover}
 .add{margin-top:-14px;position:relative;background:var(--card);color:var(--grn);border:1px solid var(--ln);border-radius:9px;padding:7px 0;width:80px;font-weight:800;box-shadow:0 2px 6px rgba(0,0,0,.12)}
 .step{margin:-14px auto 0;position:relative;display:flex;width:80px;justify-content:space-between;align-items:center;background:var(--grn);color:#fff;border-radius:9px;font-weight:800}.step button{background:none;color:#fff;padding:7px 10px;font-size:16px}
 .bar{position:fixed;left:50%;transform:translateX(-50%);bottom:12px;width:calc(100% - 24px);max-width:456px;background:var(--grn);color:#fff;border-radius:14px;padding:14px 16px;display:flex;justify-content:space-between;font-weight:700;z-index:6}
@@ -29,6 +29,7 @@ button{font:inherit;cursor:pointer;border:0}input,select,textarea{font:inherit;p
 .mr{display:flex;justify-content:space-between;align-items:center;gap:8px;background:var(--card);padding:8px 12px;border-radius:10px;margin-bottom:6px}.mr input[type=number]{width:80px}.mr button{padding:8px 10px;border-radius:8px;background:var(--bg);color:var(--tx)}
 .toast{position:fixed;top:14px;left:50%;transform:translateX(-50%);background:var(--tx);color:var(--bg);padding:10px 18px;border-radius:20px;z-index:20;font-weight:600}
 </style></head><body><div id="app"><div class="empty">Loading…</div></div>
+<input id="pf" type="file" accept="image/*" style="display:none" onchange="setPhoto()">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.75.0/dist/umd/supabase.js"></script>
 <script>
 const SB=supabase.createClient("https://spsoahhxdllnjopqafpt.supabase.co","sb_publishable_7gV6S03eRcgHjxukEfYORw_NYS3MqDG");
@@ -104,7 +105,7 @@ async function refresh(){
  const since=new Date(Date.now()-864e5).toISOString();
  const [o,m]=await Promise.all([SB.from("orders").select("*,order_items(*)").eq("restaurant_id",A.r.id).gte("created_at",since).order("id"),SB.from("menu_items").select("*").eq("restaurant_id",A.r.id).eq("hidden",false).order("category").order("name")]);
  A.orders=o.data||[];A.menu=m.data||[];
- if(A.tab==="menu"&&document.activeElement&&/INPUT|SELECT/.test(document.activeElement.tagName))return;staffRender()}
+ if(A.tab==="menu"&&(($("af")&&$("af").files.length)||(document.activeElement&&/INPUT|SELECT/.test(document.activeElement.tagName))))return;staffRender()}
 function staffRender(){
  let h=`<div class="top"><b>${esc(A.r.name)}</b><button onclick="logout()">Logout</button></div><div class="tabs">${[["orders","👨‍🍳 Kitchen"],["bills","🧾 Bills"],["menu","🍴 Menu"]].map(t=>`<button class="${A.tab===t[0]?"on":""}" onclick="A.tab='${t[0]}';staffRender()">${t[1]}</button>`).join("")}</div><div class="wide">`;
  if(A.tab==="orders"){const act=A.orders.filter(o=>["new","preparing","ready"].includes(o.status));
@@ -113,14 +114,27 @@ function staffRender(){
   h+=ks.length?`<div class="grid">${ks.map(t=>{const os=tb[t],T=os.reduce((a,o)=>a+ +o.total,0),it={};os.forEach(o=>(o.order_items||[]).forEach(x=>it[x.name]=(it[x.name]||0)+x.qty));
    return `<div class="kc" style="border-color:var(--red)"><h4><span>Table ${t}</span><span style="font-size:13px;color:var(--mu)">${os.length} order${os.length>1?"s":""}</span></h4>${Object.keys(it).map(n=>`<div class="row s"><span>${it[n]} × ${esc(n)}</span></div>`).join("")}<div class="row tot"><span>Total (incl. GST)</span><span>${R(T)}</span></div><button class="go g" onclick="closeT(${t})">Collect ${R(T)} & close table</button></div>`}).join("")}</div>`:'<div class="empty">No open tables.</div>'}
  if(A.tab==="menu"){
-  h+=`<div class="kc" style="border-color:var(--grn);margin-bottom:14px"><b>Add new item</b><div style="display:grid;gap:8px;margin-top:8px"><input id="an" placeholder="Item name"><input id="ap" type="number" placeholder="Price ₹"><input id="ad" placeholder="Short description"><input id="ac" placeholder="Category (e.g. Starters)" list="cl"><datalist id="cl">${[...new Set(A.menu.map(m=>m.category))].map(c=>`<option value="${esc(c)}">`).join("")}</datalist><select id="av"><option value="1">Veg</option><option value="0">Non-veg</option></select><input id="ai" placeholder="Image link (optional)"><button class="go g" onclick="addItem()">+ Add item</button></div></div>`;
-  h+=A.menu.map(m=>`<div class="mr"><span style="flex:1;${m.available?"":"text-decoration:line-through;opacity:.6"}">${esc(m.name)}<br><small style="color:var(--mu)">${esc(m.category)}</small></span>₹<input type="number" value="${m.price}" onchange="setPrice('${m.id}',this.value)"><button onclick="toggle('${m.id}',${!m.available})">${m.available?"Sold out":"Available"}</button><button onclick="rem('${m.id}')">🗑</button></div>`).join("")}
+  h+=`<div class="kc" style="border-color:var(--grn);margin-bottom:14px"><b>Add new item</b><div style="display:grid;gap:8px;margin-top:8px"><input id="an" placeholder="Item name"><input id="ap" type="number" placeholder="Price ₹"><input id="ad" placeholder="Short description"><input id="ac" placeholder="Category (e.g. Starters)" list="cl"><datalist id="cl">${[...new Set(A.menu.map(m=>m.category))].map(c=>`<option value="${esc(c)}">`).join("")}</datalist><select id="av"><option value="1">Veg</option><option value="0">Non-veg</option></select><label style="font-size:13px;color:var(--mu)">📷 Food photo (optional)</label><input id="af" type="file" accept="image/*"><button class="go g" onclick="addItem()">+ Add item</button></div></div>`;
+  h+=A.menu.map(m=>`<div class="mr">${m.image_url?`<img src="${esc(m.image_url)}" style="width:44px;height:44px;border-radius:8px;object-fit:cover" alt="">`:""}<span style="flex:1;${m.available?"":"text-decoration:line-through;opacity:.6"}">${esc(m.name)}<br><small style="color:var(--mu)">${esc(m.category)}</small></span>₹<input type="number" value="${m.price}" onchange="setPrice('${m.id}',this.value)"><button onclick="pickPhoto('${m.id}')">📷</button><button onclick="toggle('${m.id}',${!m.available})">${m.available?"Sold out":"Available"}</button><button onclick="rem('${m.id}')">🗑</button></div>`).join("")}
  h+="</div>";app.innerHTML=h}
+async function uploadImg(file){
+ const bmp=await createImageBitmap(file),sc=Math.min(1,900/Math.max(bmp.width,bmp.height));
+ const cv=document.createElement("canvas");cv.width=Math.round(bmp.width*sc);cv.height=Math.round(bmp.height*sc);
+ cv.getContext("2d").drawImage(bmp,0,0,cv.width,cv.height);
+ const blob=await new Promise(r=>cv.toBlob(r,"image/jpeg",.82));
+ const path=A.r.id+"/"+Date.now()+".jpg";
+ const {error}=await SB.storage.from("menu-images").upload(path,blob,{contentType:"image/jpeg"});
+ if(error)throw error;return SB.storage.from("menu-images").getPublicUrl(path).data.publicUrl}
+let PH=null;function pickPhoto(id){PH=id;$("pf").value="";$("pf").click()}
+async function setPhoto(){const f=$("pf").files[0];if(!f||!PH)return;toast("Uploading photo…");
+ try{const u=await uploadImg(f);const {error}=await SB.from("menu_items").update({image_url:u}).eq("id",PH);if(error)throw error;toast("Photo updated");refresh()}
+ catch(e){alert("Photo upload failed: "+(e.message||e))}}
 async function adv(id,st){await SB.from("orders").update({status:st}).eq("id",id);refresh()}
 async function closeT(t){await SB.from("orders").update({payment_status:"paid"}).eq("restaurant_id",A.r.id).eq("table_no",t).eq("payment_status","pending");await SB.from("table_sessions").update({status:"closed"}).eq("restaurant_id",A.r.id).eq("table_no",t).eq("status","open");refresh()}
 async function addItem(){const n=$("an").value.trim(),p=+$("ap").value,c=$("ac").value.trim();if(!n||!p||!c)return alert("Name, price and category are required");
- const {error}=await SB.from("menu_items").insert({restaurant_id:A.r.id,name:n,price:p,category:c,description:$("ad").value.trim(),is_veg:$("av").value==="1",image_url:$("ai").value.trim()||null});
- if(error)return alert(error.message);toast("Item added");A.tab="menu";refresh()}
+ let img=null;const f=$("af").files[0];if(f){toast("Uploading photo…");try{img=await uploadImg(f)}catch(e){return alert("Photo upload failed: "+(e.message||e))}}
+ const {error}=await SB.from("menu_items").insert({restaurant_id:A.r.id,name:n,price:p,category:c,description:$("ad").value.trim(),is_veg:$("av").value==="1",image_url:img});
+ if(error)return alert(error.message);toast("Item added");$("af").value="";A.tab="menu";refresh()}
 async function setPrice(id,v){if(!(+v>0))return;const {error}=await SB.from("menu_items").update({price:+v}).eq("id",id);toast(error?error.message:"Price updated")}
 async function toggle(id,a){await SB.from("menu_items").update({available:a}).eq("id",id);refresh()}
 async function rem(id){if(!confirm("Remove this item from the menu?"))return;await SB.from("menu_items").update({hidden:true}).eq("id",id);refresh()}
